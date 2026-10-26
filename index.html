@@ -4,99 +4,106 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1c1733">
-<title>Nós os dois</title>
+<title>Nosso chat</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --noite: #1c1733;
-    --painel: #2a2350;
-    --minha: #ff8fa3;
-    --minha-texto: #2b1020;
-    --dela: #3b3270;
-    --texto: #f4effa;
-    --suave: #a99fcb;
-    --erro: #ffb4a8;
-  }
-  * { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; }
-  body {
-    background: var(--noite); color: var(--texto);
-    font-family: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
-    font-size: 16px; line-height: 1.4;
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-  button, input { font: inherit; color: inherit; }
-  :focus-visible { outline: 3px solid var(--minha); outline-offset: 2px; }
-
-  /* Entrada */
-  #entrada { display: flex; flex-direction: column; justify-content: center; gap: 14px; max-width: 380px; margin: 0 auto; padding: 24px; height: 100%; }
-  #entrada h1 { font-size: 2rem; font-weight: 800; margin: 0 0 4px; }
-  #entrada p { margin: 0 0 8px; color: var(--suave); }
-  label { font-weight: 600; font-size: .9rem; color: var(--suave); }
-  input { width: 100%; padding: 13px 14px; border-radius: 14px; border: 2px solid transparent; background: var(--painel); }
-  input:focus { border-color: var(--minha); outline: none; }
-  .botao { padding: 14px; border: 0; border-radius: 14px; background: var(--minha); color: var(--minha-texto); font-weight: 800; cursor: pointer; }
-  .botao:disabled { opacity: .5; cursor: default; }
-  #erro { color: var(--erro); min-height: 1.4em; margin: 0; }
-
-  /* Chat */
-  #chat { display: none; flex-direction: column; height: 100%; max-width: 640px; margin: 0 auto; }
-  #chat.ativo { display: flex; }
-  header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: var(--painel); }
-  header strong { font-size: 1.1rem; font-weight: 800; }
-  header button { background: none; border: 0; color: var(--suave); cursor: pointer; padding: 6px; }
-  #mensagens { flex: 1; overflow-y: auto; padding: 16px 14px; display: flex; flex-direction: column; gap: 6px; }
-  .vazio { margin: auto; text-align: center; color: var(--suave); }
-  .msg { max-width: 80%; padding: 9px 13px; border-radius: 18px; background: var(--dela); overflow-wrap: anywhere; white-space: pre-wrap; align-self: flex-start; border-bottom-left-radius: 6px; }
-  .msg.minha { align-self: flex-end; background: var(--minha); color: var(--minha-texto); border-bottom-left-radius: 18px; border-bottom-right-radius: 6px; }
-  .msg small { display: block; margin-top: 2px; font-size: .72rem; opacity: .7; text-align: right; white-space: normal; }
-  form { display: flex; gap: 8px; padding: 10px 12px; background: var(--painel); }
-  form input { background: var(--noite); flex: 1; }
-  form .botao { padding: 0 20px; }
-  @media (prefers-reduced-motion: no-preference) {
-    .msg { animation: entra .18s ease-out; }
-    @keyframes entra { from { transform: translateY(6px); opacity: 0; } }
-  }
+  :root { --noite:#1c1733; --painel:#2a2350; --minha:#ff8fa3; --minha-texto:#2b1020; --dela:#3b3270; --texto:#f4effa; --suave:#a99fcb; --erro:#ffb4a8; }
+  * { box-sizing:border-box; }
+  html, body { height:100%; margin:0; }
+  body { background:var(--noite); color:var(--texto); font-family:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif; font-size:16px; line-height:1.4; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); }
+  button, input { font:inherit; color:inherit; }
+  :focus-visible { outline:3px solid var(--minha); outline-offset:2px; }
+  #entrada { display:flex; flex-direction:column; justify-content:center; gap:14px; max-width:380px; margin:0 auto; padding:24px; height:100%; }
+  #entrada h1 { font-size:2rem; font-weight:800; margin:0 0 4px; }
+  #entrada p { margin:0 0 8px; color:var(--suave); }
+  label { font-weight:600; font-size:.9rem; color:var(--suave); }
+  input[type=text] { width:100%; padding:13px 14px; border-radius:14px; border:2px solid transparent; background:var(--painel); }
+  input[type=text]:focus { border-color:var(--minha); outline:none; }
+  .botao { padding:14px; border:0; border-radius:14px; background:var(--minha); color:var(--minha-texto); font-weight:800; cursor:pointer; }
+  .botao:disabled { opacity:.5; }
+  #erro { color:var(--erro); min-height:1.4em; margin:0; }
+  #chat { display:none; flex-direction:column; height:100%; max-width:640px; margin:0 auto; position:relative; }
+  #chat.ativo { display:flex; }
+  header { display:flex; align-items:center; gap:10px; padding:10px 14px; background:var(--painel); }
+  header .titulo { flex:1; min-width:0; }
+  header strong { font-size:1.1rem; font-weight:800; }
+  .membros { font-size:.75rem; color:var(--suave); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .quem { display:block; font-size:.75rem; font-weight:800; margin:0 6px 2px; opacity:.9; }
+  .txt { background:none; border:0; color:var(--suave); cursor:pointer; padding:8px; }
+  .av { width:36px; height:36px; border-radius:50%; background:var(--dela); display:grid; place-items:center; font-weight:800; overflow:hidden; flex:none; }
+  .av img { width:100%; height:100%; object-fit:cover; display:block; }
+  .av.peq { width:28px; height:28px; font-size:.8rem; }
+  #meuAv { border:2px solid var(--minha); padding:0; cursor:pointer; color:var(--texto); }
+  .painel-fundo { display:none; background:var(--painel); padding:6px 14px 14px; border-top:1px solid var(--dela); }
+  .painel-fundo.aberto { display:block; }
+  .painel-fundo p { margin:6px 0 10px; color:var(--suave); font-size:.9rem; }
+  .amostras { display:flex; flex-wrap:wrap; gap:10px; }
+  .amostra { width:58px; border:0; background:none; cursor:pointer; font-size:.72rem; color:var(--suave); padding:0; }
+  .amostra span { display:block; height:44px; border-radius:12px; margin-bottom:3px; border:2px solid transparent; }
+  .amostra.sel span { border-color:var(--minha); }
+  #mensagens { flex:1; overflow-y:auto; padding:16px 12px; display:flex; flex-direction:column; gap:6px; background:var(--noite) center/cover; }
+  .vazio { margin:auto; text-align:center; color:var(--suave); }
+  .linha { display:flex; align-items:flex-end; gap:6px; max-width:88%; align-self:flex-start; }
+  .linha.minha { align-self:flex-end; }
+  .msg { padding:9px 13px; border-radius:18px; background:var(--dela); overflow-wrap:anywhere; white-space:pre-wrap; border-bottom-left-radius:6px; }
+  .minha .msg { background:var(--minha); color:var(--minha-texto); border-bottom-left-radius:18px; border-bottom-right-radius:6px; }
+  .msg.foto { padding:4px; }
+  .msg img { display:block; width:230px; max-width:100%; border-radius:14px; cursor:zoom-in; }
+  .msg small { display:block; margin-top:2px; padding:0 6px; font-size:.72rem; opacity:.7; text-align:right; white-space:normal; }
+  form { display:flex; gap:8px; align-items:center; padding:10px 12px; background:var(--painel); }
+  form input[type=text] { background:var(--noite); flex:1; }
+  form .botao { padding:0 20px; height:46px; }
+  #anexar { background:none; border:0; padding:6px; color:var(--suave); cursor:pointer; display:grid; }
+  #ver { display:none; position:fixed; inset:0; background:rgba(10,8,20,.94); z-index:9; align-items:center; justify-content:center; padding:16px; }
+  #ver.aberto { display:flex; }
+  #ver img { max-width:100%; max-height:100%; border-radius:12px; }
+  @media (prefers-reduced-motion: no-preference) { .linha { animation:entra .18s ease-out; } @keyframes entra { from { transform:translateY(6px); opacity:0; } } }
 </style>
 </head>
 <body>
 
 <section id="entrada">
-  <h1>Nós os dois</h1>
-  <p>Um chat só para vocês. Usem o mesmo código e conversam em tempo real.</p>
-  <div>
-    <label for="nome">O teu nome</label>
-    <input id="nome" autocomplete="given-name" maxlength="20">
-  </div>
-  <div>
-    <label for="codigo">Código secreto do chat</label>
-    <input id="codigo" autocomplete="off" maxlength="40" placeholder="Escolham uma frase só vossa">
-  </div>
+  <h1>Nosso chat</h1>
+  <p>Um chat privado para o grupo. Todos usam o mesmo código e conversam em tempo real.</p>
+  <div><label for="nome">O teu nome</label><input type="text" id="nome" autocomplete="given-name" maxlength="20"></div>
+  <div><label for="codigo">Código secreto do chat</label><input type="text" id="codigo" autocomplete="off" maxlength="40" placeholder="Escolham uma frase só vossa"></div>
   <p id="erro" role="alert"></p>
   <button class="botao" id="entrar">Entrar no chat</button>
 </section>
 
 <section id="chat" aria-label="Conversa">
   <header>
-    <strong id="titulo">Chat</strong>
-    <button id="sair">Sair</button>
+    <button class="av" id="meuAv" title="Mudar a minha foto de perfil" aria-label="Mudar a minha foto de perfil"></button>
+    <div class="titulo"><strong>Nosso chat</strong><div id="membros" class="membros"></div></div>
+    <button class="txt" id="btFundo">Fundo</button>
+    <button class="txt" id="sair">Sair</button>
   </header>
+  <div class="painel-fundo" id="painelFundo">
+    <p>Escolhe o fundo das mensagens (só muda no teu telemóvel).</p>
+    <div class="amostras" id="amostras"></div>
+  </div>
   <div id="mensagens" aria-live="polite"></div>
   <form id="formulario">
-    <input id="texto" autocomplete="off" maxlength="2000" placeholder="Escreve uma mensagem" aria-label="Mensagem">
+    <button type="button" id="anexar" aria-label="Enviar foto">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 9"/></svg>
+    </button>
+    <input type="text" id="texto" autocomplete="off" maxlength="2000" placeholder="Escreve uma mensagem" aria-label="Mensagem">
     <button class="botao" type="submit">Enviar</button>
   </form>
 </section>
 
+<div id="ver" role="dialog" aria-label="Foto"><img alt="Foto ampliada"></div>
+<input type="file" id="fFoto" accept="image/*" hidden>
+<input type="file" id="fPerfil" accept="image/*" hidden>
+<input type="file" id="fFundo" accept="image/*" hidden>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
   import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-  import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp }
+  import { initializeFirestore, collection, doc, setDoc, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp }
     from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
-  // 1) COLA AQUI a configuração do teu projeto Firebase (passo explicado na conversa)
   const firebaseConfig = {
     apiKey: "AIzaSyDlcVBbN27Pe_t-0tn1wSlYyEETZj9G1DM",
     authDomain: "chat-pessoal-b1217.firebaseapp.com",
@@ -106,102 +113,179 @@
 
   const $ = (id) => document.getElementById(id);
   const entrada = $("entrada"), chat = $("chat"), lista = $("mensagens");
-  let db, auth, parar = null, meuNome = "";
+  let db, auth, parar = [], meuNome = "", chatId = "", perfis = {}, docs = [];
 
-  function erro(t) { $("erro").textContent = t; }
+  const chave = (n) => n.trim().toLowerCase().replace(/[\/\s]+/g, "_");
+  const erro = (t) => { $("erro").textContent = t; };
+  const guardar = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+  const ler = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
 
-  async function iniciar() {
-    const app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app);
-    await signInAnonymously(auth);
+  // ---------- Fundos ----------
+  const FUNDOS = {
+    noite: ["Noite", "#1c1733"],
+    aurora: ["Aurora", "linear-gradient(160deg,#2b1b5e,#6b2f7a 55%,#c0577f)"],
+    poente: ["Pôr do sol", "linear-gradient(170deg,#3b1a4a,#a23e5a 60%,#f0925a)"],
+    oceano: ["Oceano", "linear-gradient(170deg,#0f2a4a,#14507a 60%,#1e7f8c)"],
+    floresta: ["Floresta", "linear-gradient(170deg,#10291f,#1d4d3a 60%,#3d7a52)"]
+  };
+  function aplicarFundo() {
+    const f = ler("nos2fundo") || "noite";
+    const foto = ler("nos2fundofoto");
+    if (f === "foto" && foto) lista.style.background = "linear-gradient(rgba(20,14,40,.45),rgba(20,14,40,.45)), url(" + foto + ") center/cover";
+    else lista.style.background = (FUNDOS[f] || FUNDOS.noite)[1];
+    document.querySelectorAll(".amostra").forEach((b) => b.classList.toggle("sel", b.dataset.f === f));
+  }
+  function montarAmostras() {
+    const box = $("amostras");
+    for (const k in FUNDOS) {
+      const b = document.createElement("button");
+      b.className = "amostra"; b.dataset.f = k;
+      b.innerHTML = "<span></span>" + FUNDOS[k][0];
+      b.firstChild.style.background = FUNDOS[k][1];
+      b.onclick = () => { guardar("nos2fundo", k); aplicarFundo(); };
+      box.append(b);
+    }
+    const b = document.createElement("button");
+    b.className = "amostra"; b.dataset.f = "foto";
+    b.innerHTML = "<span></span>A minha foto";
+    b.firstChild.style.background = "var(--dela)";
+    b.onclick = () => $("fFundo").click();
+    box.append(b);
   }
 
-  // Transforma o código num identificador seguro para usar como nome da conversa
-  async function idDaConversa(codigo) {
-    const bytes = new TextEncoder().encode("nos-os-dois:" + codigo.trim().toLowerCase());
-    const hash = await crypto.subtle.digest("SHA-256", bytes);
-    return [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
+  // ---------- Imagens ----------
+  async function comprimir(file, max, qual, quadrado) {
+    const url = URL.createObjectURL(file);
+    const img = await new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = url; });
+    let sx = 0, sy = 0, sw = img.width, sh = img.height;
+    if (quadrado) { const l = Math.min(sw, sh); sx = (sw - l) / 2; sy = (sh - l) / 2; sw = sh = l; }
+    const e = Math.min(1, max / Math.max(sw, sh));
+    const c = document.createElement("canvas");
+    c.width = Math.round(sw * e); c.height = Math.round(sh * e);
+    c.getContext("2d").drawImage(img, sx, sy, sw, sh, 0, 0, c.width, c.height);
+    URL.revokeObjectURL(url);
+    let q = qual, d = c.toDataURL("image/jpeg", q);
+    while (d.length > 700000 && q > 0.3) { q -= 0.1; d = c.toDataURL("image/jpeg", q); }
+    return d;
+  }
+  function avatar(nome, foto, peq) {
+    const a = document.createElement("div");
+    a.className = "av" + (peq ? " peq" : "");
+    if (foto) { const i = document.createElement("img"); i.src = foto; i.alt = nome; a.append(i); }
+    else a.textContent = (nome || "?").trim().charAt(0).toUpperCase();
+    return a;
+  }
+  function meuAvatar() {
+    const b = $("meuAv"); b.textContent = "";
+    const foto = perfis[chave(meuNome)];
+    b.append(foto ? Object.assign(new Image(), { src: foto, alt: meuNome }) : document.createTextNode(meuNome.charAt(0).toUpperCase()));
   }
 
-  function hora(ts) {
-    if (!ts) return "a enviar…";
-    return ts.toDate().toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" });
-  }
+  // ---------- Mensagens ----------
+  const matiz = (n) => { let h = 0; for (const c of n.toLowerCase()) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
+  const hora = (ts) => ts ? ts.toDate().toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" }) : "a enviar…";
 
-  function desenhar(docs) {
+  function desenhar() {
     lista.textContent = "";
     if (!docs.length) {
-      const p = document.createElement("p");
-      p.className = "vazio";
-      p.textContent = "Ainda não há mensagens. Escreve a primeira.";
-      lista.append(p);
-      return;
+      const p = document.createElement("p"); p.className = "vazio";
+      p.textContent = "Ainda não há mensagens. Escreve a primeira."; lista.append(p); return;
     }
     for (const d of docs) {
-      const m = d.data();
-      const el = document.createElement("div");
-      el.className = "msg" + (m.uid === auth.currentUser.uid ? " minha" : "");
-      el.append(document.createTextNode(m.text));
+      const m = d.data(), minha = m.uid === auth.currentUser.uid;
+      const linha = document.createElement("div"); linha.className = "linha" + (minha ? " minha" : "");
+      if (!minha) linha.append(avatar(m.nome, perfis[chave(m.nome || "")], true));
+      const el = document.createElement("div"); el.className = "msg" + (m.img && !m.text ? " foto" : "");
+      if (!minha) {
+        el.style.background = "hsl(" + matiz(m.nome || "") + " 38% 30%)";
+        const q = document.createElement("span"); q.className = "quem"; q.textContent = m.nome || "";
+        q.style.color = "hsl(" + matiz(m.nome || "") + " 80% 80%)"; el.append(q);
+      }
+      if (m.img) { const i = new Image(); i.src = m.img; i.alt = "Foto enviada"; i.onclick = () => abrirFoto(m.img); el.append(i); }
+      if (m.text) el.append(document.createTextNode(m.text));
       const s = document.createElement("small");
-      s.textContent = (m.uid === auth.currentUser.uid ? "" : m.nome + " · ") + hora(m.createdAt);
-      el.append(s);
-      lista.append(el);
+      s.textContent = hora(m.createdAt);
+      el.append(s); linha.append(el); lista.append(linha);
     }
+    const nomes = [...new Set(docs.map((d) => d.data().nome).filter(Boolean))];
+    $("membros").textContent = nomes.join(", ");
     lista.scrollTop = lista.scrollHeight;
   }
+  function abrirFoto(src) { $("ver").firstElementChild.src = src; $("ver").classList.add("aberto"); }
+  $("ver").onclick = () => $("ver").classList.remove("aberto");
 
   async function abrir(nome, codigo) {
-    const id = await idDaConversa(codigo);
-    const col = collection(db, "chats", id, "messages");
+    const bytes = new TextEncoder().encode("nos-os-dois:" + codigo.trim().toLowerCase());
+    const hash = await crypto.subtle.digest("SHA-256", bytes);
+    chatId = [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
     meuNome = nome;
-    $("titulo").textContent = "Nós os dois";
-    entrada.style.display = "none";
-    chat.classList.add("ativo");
-    parar = onSnapshot(query(col, orderBy("createdAt", "asc"), limit(300)), (snap) => desenhar(snap.docs),
-      () => { sair(); erro("Não foi possível abrir o chat. Verifica as regras do Firestore."); });
+    const msgs = collection(db, "chats", chatId, "messages");
+    entrada.style.display = "none"; chat.classList.add("ativo");
+    meuAvatar(); aplicarFundo();
+    parar.push(onSnapshot(query(msgs, orderBy("createdAt", "asc"), limit(200)),
+      (snap) => { docs = snap.docs; desenhar(); },
+      () => { sair(); erro("Não foi possível abrir o chat. Verifica as regras do Firestore."); }));
+    parar.push(onSnapshot(collection(db, "chats", chatId, "profiles"),
+      (snap) => { perfis = {}; snap.forEach((d) => { perfis[d.id] = d.data().foto || ""; }); meuAvatar(); desenhar(); }));
 
     $("formulario").onsubmit = async (e) => {
       e.preventDefault();
       const texto = $("texto").value.trim();
       if (!texto) return;
       $("texto").value = "";
-      await addDoc(col, { text: texto, nome: meuNome, uid: auth.currentUser.uid, createdAt: serverTimestamp() });
+      await addDoc(msgs, { text: texto, nome: meuNome, uid: auth.currentUser.uid, createdAt: serverTimestamp() });
+    };
+    $("fFoto").onchange = async (e) => {
+      const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+      try {
+        const img = await comprimir(f, 900, 0.72, false);
+        await addDoc(msgs, { text: "", img, nome: meuNome, uid: auth.currentUser.uid, createdAt: serverTimestamp() });
+      } catch (x) { alert("Não consegui enviar a foto. Tenta outra."); }
+    };
+    $("fPerfil").onchange = async (e) => {
+      const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+      try {
+        const foto = await comprimir(f, 160, 0.8, true);
+        await setDoc(doc(db, "chats", chatId, "profiles", chave(meuNome)), { nome: meuNome, foto });
+      } catch (x) { alert("Não consegui guardar a foto de perfil."); }
     };
     $("texto").focus();
   }
 
   function sair() {
-    if (parar) parar();
-    parar = null;
-    chat.classList.remove("ativo");
-    entrada.style.display = "";
-    $("entrar").disabled = false;
+    parar.forEach((p) => p()); parar = []; docs = []; perfis = {};
+    chat.classList.remove("ativo"); $("painelFundo").classList.remove("aberto");
+    entrada.style.display = ""; $("entrar").disabled = false;
   }
 
-  $("entrar").onclick = async () => {
-    const nome = $("nome").value.trim();
-    const codigo = $("codigo").value;
-    if (!nome || codigo.trim().length < 4) { erro("Escreve o teu nome e um código com pelo menos 4 caracteres."); return; }
-    erro("");
-    $("entrar").disabled = true;
+  $("meuAv").onclick = () => $("fPerfil").click();
+  $("anexar").onclick = () => $("fFoto").click();
+  $("btFundo").onclick = () => $("painelFundo").classList.toggle("aberto");
+  $("fFundo").onchange = async (e) => {
+    const f = e.target.files[0]; e.target.value = ""; if (!f) return;
     try {
-      await abrir(nome, codigo);
-      try { localStorage.setItem("nos2", JSON.stringify({ nome, codigo })); } catch (e) {}
-    } catch (e) {
-      erro("Não consegui ligar. Confirma a configuração do Firebase.");
-      $("entrar").disabled = false;
-    }
+      guardar("nos2fundofoto", await comprimir(f, 900, 0.6, false));
+      guardar("nos2fundo", "foto"); aplicarFundo();
+    } catch (x) { alert("Não consegui usar essa foto como fundo."); }
+  };
+  $("entrar").onclick = async () => {
+    const nome = $("nome").value.trim(), codigo = $("codigo").value;
+    if (!nome || codigo.trim().length < 4) { erro("Escreve o teu nome e um código com pelo menos 4 caracteres."); return; }
+    erro(""); $("entrar").disabled = true;
+    try { await abrir(nome, codigo); guardar("nos2", JSON.stringify({ nome, codigo })); }
+    catch (e) { erro("Não consegui ligar. Confirma a configuração do Firebase."); $("entrar").disabled = false; }
   };
   $("sair").onclick = () => { try { localStorage.removeItem("nos2"); } catch (e) {} sair(); };
 
+  montarAmostras();
   try {
-    await iniciar();
-    const guardado = JSON.parse(localStorage.getItem("nos2") || "null");
-    if (guardado) { $("nome").value = guardado.nome; $("codigo").value = guardado.codigo; await abrir(guardado.nome, guardado.codigo); }
-  } catch (e) {
-    erro("Falta colar a configuração do Firebase no ficheiro (procura COLA_AQUI).");
-  }
+    const app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
+    await signInAnonymously(auth);
+    const g = JSON.parse(ler("nos2") || "null");
+    if (g) { $("nome").value = g.nome; $("codigo").value = g.codigo; await abrir(g.nome, g.codigo); }
+  } catch (e) { erro("Não consegui ligar. Confirma a configuração do Firebase."); }
 </script>
 </body>
 </html>
