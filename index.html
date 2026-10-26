@@ -59,6 +59,15 @@
   #ver.aberto { display:flex; }
   #ver img { max-width:100%; max-height:100%; border-radius:12px; }
   @media (prefers-reduced-motion: no-preference) { .linha { animation:entra .18s ease-out; } @keyframes entra { from { transform:translateY(6px); opacity:0; } } }
+  .tit { display:block; max-width:100%; background:none; border:0; padding:0; font-size:1.1rem; font-weight:800; color:var(--texto); cursor:pointer; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tit::after { content:" \270E"; font-size:.8rem; opacity:.5; }
+  #tituloEd { display:none; width:100%; padding:6px 10px; border-radius:10px; font-weight:800; border:2px solid var(--minha); }
+  #mic { background:none; border:0; padding:6px; color:var(--suave); cursor:pointer; display:grid; border-radius:50%; }
+  #mic.rec { background:var(--minha); color:var(--minha-texto); }
+  #barraGrav { display:none; flex:1; align-items:center; gap:10px; font-weight:600; }
+  .ponto { width:10px; height:10px; border-radius:50%; background:#ff5c6c; }
+  .msg audio { display:block; width:230px; max-width:100%; height:40px; }
+  @media (prefers-reduced-motion: no-preference) { .ponto { animation:pisca 1s infinite; } @keyframes pisca { 50% { opacity:.25; } } }
 </style>
 </head>
 <body>
@@ -75,7 +84,7 @@
 <section id="chat" aria-label="Conversa">
   <header>
     <button class="av" id="meuAv" title="Mudar a minha foto de perfil" aria-label="Mudar a minha foto de perfil"></button>
-    <div class="titulo"><strong>Nosso chat</strong><div id="membros" class="membros"></div></div>
+    <div class="titulo"><button class="tit" id="tit" title="Mudar o nome da sala">Nosso chat</button><input type="text" id="tituloEd" maxlength="30" aria-label="Nome da sala"><div id="membros" class="membros"></div></div>
     <button class="txt" id="btFundo">Fundo</button>
     <button class="txt" id="sair">Sair</button>
   </header>
@@ -88,8 +97,12 @@
     <button type="button" id="anexar" aria-label="Enviar foto">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 9"/></svg>
     </button>
+    <button type="button" id="mic" aria-label="Gravar mensagem de voz">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+    </button>
     <input type="text" id="texto" autocomplete="off" maxlength="2000" placeholder="Escreve uma mensagem" aria-label="Mensagem">
-    <button class="botao" type="submit">Enviar</button>
+    <div id="barraGrav"><span class="ponto"></span><span id="tempo">0:00</span><button type="button" class="txt" id="cancelGrav">Cancelar</button></div>
+    <button class="botao" type="submit" id="enviarTxt">Enviar</button>
   </form>
 </section>
 
@@ -181,11 +194,54 @@
     b.append(foto ? Object.assign(new Image(), { src: foto, alt: meuNome }) : document.createTextNode(meuNome.charAt(0).toUpperCase()));
   }
 
+  // ---------- Nome da sala e voz ----------
+  let msgsCol = null, sala = "", pendente = false, rec = null, chunks = [], tIni = 0, tInt = null, cancelado = false, stream = null;
+  const aplicarSala = () => { const n = sala || "Nosso chat"; $("tit").textContent = n; document.title = n; };
+  async function guardarSala() {
+    const v = $("tituloEd").value.trim().slice(0, 30);
+    $("tituloEd").style.display = "none"; $("tit").style.display = "";
+    if (!v || v === (sala || "Nosso chat")) return;
+    sala = v; aplicarSala();
+    try { await setDoc(doc(db, "chats", chatId, "profiles", "_config_sala"), { sala: v }); } catch (e) {}
+  }
+  function modoGrav(on) {
+    $("texto").style.display = on ? "none" : ""; $("barraGrav").style.display = on ? "flex" : "none";
+    $("enviarTxt").style.display = on ? "none" : ""; $("anexar").style.display = on ? "none" : "";
+    $("mic").classList.toggle("rec", on);
+    $("mic").setAttribute("aria-label", on ? "Enviar mensagem de voz" : "Gravar mensagem de voz");
+  }
+  const paraUrl = (blob) => new Promise((ok) => { const r = new FileReader(); r.onload = () => ok(r.result); r.readAsDataURL(blob); });
+  function cancelarGrav() { if (rec && rec.state === "recording") { cancelado = true; rec.stop(); } }
+  async function iniciarGrav() {
+    if (!navigator.mediaDevices || !window.MediaRecorder) { alert("Este navegador não suporta mensagens de voz."); return; }
+    try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+    catch (e) { alert("Preciso de permissão para usar o microfone."); return; }
+    const tipo = ["audio/mp4", "audio/webm;codecs=opus", "audio/ogg;codecs=opus"].find((t) => MediaRecorder.isTypeSupported(t)) || "";
+    rec = new MediaRecorder(stream, tipo ? { mimeType: tipo, audioBitsPerSecond: 32000 } : { audioBitsPerSecond: 32000 });
+    chunks = []; cancelado = false;
+    rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+    rec.onstop = async () => {
+      stream.getTracks().forEach((t) => t.stop()); clearInterval(tInt); modoGrav(false);
+      if (cancelado || !chunks.length) return;
+      const url = await paraUrl(new Blob(chunks, { type: rec.mimeType || tipo || "audio/webm" }));
+      if (url.length > 900000) { alert("A mensagem de voz ficou grande demais. Tenta uma mais curta."); return; }
+      try { await addDoc(msgsCol, { text: "", audio: url, nome: meuNome, uid: auth.currentUser.uid, createdAt: serverTimestamp() }); }
+      catch (e) { alert("Não consegui enviar a mensagem de voz."); }
+    };
+    rec.start(); tIni = Date.now(); modoGrav(true); $("tempo").textContent = "0:00";
+    tInt = setInterval(() => {
+      const t = Math.floor((Date.now() - tIni) / 1000);
+      $("tempo").textContent = Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0");
+      if (t >= 60 && rec.state === "recording") rec.stop();
+    }, 250);
+  }
+
   // ---------- Mensagens ----------
   const matiz = (n) => { let h = 0; for (const c of n.toLowerCase()) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
   const hora = (ts) => ts ? ts.toDate().toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" }) : "a enviar…";
 
   function desenhar() {
+    if ([...lista.querySelectorAll("audio")].some((a) => !a.paused)) { pendente = true; return; }
     lista.textContent = "";
     if (!docs.length) {
       const p = document.createElement("p"); p.className = "vazio";
@@ -195,13 +251,14 @@
       const m = d.data(), minha = m.uid === auth.currentUser.uid;
       const linha = document.createElement("div"); linha.className = "linha" + (minha ? " minha" : "");
       if (!minha) linha.append(avatar(m.nome, perfis[chave(m.nome || "")], true));
-      const el = document.createElement("div"); el.className = "msg" + (m.img && !m.text ? " foto" : "");
+      const el = document.createElement("div"); el.className = "msg" + ((m.img || m.audio) && !m.text ? " foto" : "");
       if (!minha) {
         el.style.background = "hsl(" + matiz(m.nome || "") + " 38% 30%)";
         const q = document.createElement("span"); q.className = "quem"; q.textContent = m.nome || "";
         q.style.color = "hsl(" + matiz(m.nome || "") + " 80% 80%)"; el.append(q);
       }
       if (m.img) { const i = new Image(); i.src = m.img; i.alt = "Foto enviada"; i.onclick = () => abrirFoto(m.img); el.append(i); }
+      if (m.audio) { const a = document.createElement("audio"); a.controls = true; a.preload = "metadata"; a.src = m.audio; el.append(a); }
       if (m.text) el.append(document.createTextNode(m.text));
       const s = document.createElement("small");
       s.textContent = hora(m.createdAt);
@@ -220,13 +277,14 @@
     chatId = [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
     meuNome = nome;
     const msgs = collection(db, "chats", chatId, "messages");
+    msgsCol = msgs; sala = ""; aplicarSala();
     entrada.style.display = "none"; chat.classList.add("ativo");
     meuAvatar(); aplicarFundo();
     parar.push(onSnapshot(query(msgs, orderBy("createdAt", "asc"), limit(200)),
       (snap) => { docs = snap.docs; desenhar(); },
       () => { sair(); erro("Não foi possível abrir o chat. Verifica as regras do Firestore."); }));
     parar.push(onSnapshot(collection(db, "chats", chatId, "profiles"),
-      (snap) => { perfis = {}; snap.forEach((d) => { perfis[d.id] = d.data().foto || ""; }); meuAvatar(); desenhar(); }));
+      (snap) => { perfis = {}; snap.forEach((d) => { if (d.id === "_config_sala") sala = d.data().sala || ""; else perfis[d.id] = d.data().foto || ""; }); aplicarSala(); meuAvatar(); desenhar(); }));
 
     $("formulario").onsubmit = async (e) => {
       e.preventDefault();
@@ -253,12 +311,19 @@
   }
 
   function sair() {
-    parar.forEach((p) => p()); parar = []; docs = []; perfis = {};
+    cancelarGrav(); parar.forEach((p) => p()); parar = []; docs = []; perfis = {};
     chat.classList.remove("ativo"); $("painelFundo").classList.remove("aberto");
     entrada.style.display = ""; $("entrar").disabled = false;
   }
 
   $("meuAv").onclick = () => $("fPerfil").click();
+  $("mic").onclick = () => { if (rec && rec.state === "recording") rec.stop(); else iniciarGrav(); };
+  $("cancelGrav").onclick = cancelarGrav;
+  $("tit").onclick = () => { $("tituloEd").value = sala || "Nosso chat"; $("tit").style.display = "none"; $("tituloEd").style.display = "block"; $("tituloEd").focus(); $("tituloEd").select(); };
+  $("tituloEd").onblur = guardarSala;
+  $("tituloEd").onkeydown = (e) => { if (e.key === "Enter") $("tituloEd").blur(); if (e.key === "Escape") { $("tituloEd").value = sala || "Nosso chat"; $("tituloEd").blur(); } };
+  const retomar = () => { if (pendente) { pendente = false; desenhar(); } };
+  lista.addEventListener("pause", retomar, true);
   $("anexar").onclick = () => $("fFoto").click();
   $("btFundo").onclick = () => $("painelFundo").classList.toggle("aberto");
   $("fFundo").onchange = async (e) => {
